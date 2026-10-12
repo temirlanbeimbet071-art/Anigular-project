@@ -1,0 +1,136 @@
+<div class="storefront">
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Kerek, на главную">
+      <span class="brand-mark">k</span>
+      <span class="brand-name">kerek<span>.</span><small>ГОРОДСКОЙ МАРКЕТ</small></span>
+    </a>
+
+    <nav class="main-nav" aria-label="Основная навигация">
+      <a class="nav-active" href="#catalog">Коллекция</a>
+      <a href="#about">О нас</a>
+    </nav>
+
+    <a class="bag-link" href="#cart" aria-label="Перейти в корзину">
+      <span>Корзина</span>
+      <span class="bag-count" *ngIf="cartItems$ | async as items">{{ itemCount(items) }}</span>
+    </a>
+  </header>
+
+  <main id="top" class="store-layout">
+    <section id="catalog" class="catalog" aria-labelledby="catalog-title">
+      <div class="collection-note">
+        <span class="note-dot"></span>
+        <span>ВЕЩИ НА КАЖДЫЙ ДЕНЬ</span>
+        <span class="note-line"></span>
+        <span>АЛМАТЫ · 2026</span>
+      </div>
+
+      <div class="catalog-heading">
+        <div>
+          <p class="kicker">МАЛЕНЬКАЯ КОЛЛЕКЦИЯ</p>
+          <h1 id="catalog-title">Простые вещи.<br><em>Хороший выбор.</em></h1>
+        </div>
+        <p class="catalog-description">Любимые вещи для города — без лишнего, с вниманием к деталям.</p>
+      </div>
+
+      <div class="catalog-toolbar">
+        <h2>В коллекции <span>03</span></h2>
+        <span class="sort-label">СЕЗОН 01 <span class="sort-mark">↘</span></span>
+      </div>
+
+      <div class="product-grid">
+        <article class="product-card" *ngFor="let product of products">
+          <div class="product-image-wrap">
+            <img class="product-image" [src]="product.image" [alt]="product.name" loading="lazy">
+            <span class="product-tag">{{ product.tag }}</span>
+            <button class="quick-add" type="button" (click)="addProduct(product)" [attr.aria-label]="'Добавить ' + product.name + ' в корзину'">
+              <span aria-hidden="true">+</span>
+            </button>
+          </div>
+          <div class="product-details">
+            <div class="product-copy">
+              <p class="product-category">{{ product.category }}</p>
+              <h3>{{ product.name }}</h3>
+              <p class="product-description">{{ product.description }}</p>
+            </div>
+            <p class="product-price">{{ product.price | currency:'KZT':'symbol-narrow':'1.0-0' }}</p>
+          </div>
+          <button class="add-to-cart" type="button" (click)="addProduct(product)">Добавить в корзину <span aria-hidden="true">↗</span></button>
+        </article>
+      </div>
+
+      <div id="about" class="small-promise">
+        <span class="promise-star" aria-hidden="true">✳</span>
+        <p>Выбираем вещи, которые хочется носить снова.</p>
+        <span class="promise-caption">С ЗАБОТОЙ, KEREK</span>
+      </div>
+    </section>
+
+    <aside id="cart" class="cart-panel" aria-labelledby="cart-title">
+      <ng-container *ngIf="cartItems$ | async as items">
+        <div class="cart-heading">
+          <div>
+            <p class="kicker">ВАШ ВЫБОР</p>
+            <h2 id="cart-title">Корзина<span class="cart-count">{{ itemCount(items) }}</span></h2>
+          </div>
+          <button *ngIf="items.length > 0" class="clear-cart" type="button" (click)="clearCart()">Очистить</button>
+        </div>
+
+        <div *ngIf="orderPlaced" class="order-success" role="status">
+          <span class="success-mark">✓</span>
+          <div><strong>Заказ принят</strong><p>Спасибо! Скоро свяжемся с вами.</p></div>
+        </div>
+
+        <div *ngIf="items.length === 0 && !orderPlaced" class="empty-cart">
+          <div class="empty-art" aria-hidden="true"><span>k</span><i></i></div>
+          <h3>Пока пусто</h3>
+          <p>Добавьте что-нибудь из коллекции — и мы бережно соберём ваш заказ.</p>
+          <a href="#catalog" class="browse-link">Смотреть коллекцию <span aria-hidden="true">↗</span></a>
+        </div>
+
+        <div *ngIf="items.length > 0" class="cart-content">
+          <div class="cart-items">
+            <article class="cart-item" *ngFor="let item of items">
+              <div class="cart-item-image" [class]="'cart-item-image product-tone-' + item.id">
+                <span>{{ item.name.charAt(0) }}</span>
+              </div>
+              <div class="cart-item-info">
+                <h3>{{ item.name }}</h3>
+                <p>{{ item.price | currency:'KZT':'symbol-narrow':'1.0-0' }}</p>
+                <div class="quantity-control" [attr.aria-label]="'Количество: ' + item.quantity">
+                  <button type="button" (click)="decreaseProduct(item.id)" [attr.aria-label]="'Уменьшить количество: ' + item.name">−</button>
+                  <span>{{ item.quantity }}</span>
+                  <button type="button" (click)="addProduct(item)" [attr.aria-label]="'Увеличить количество: ' + item.name">+</button>
+                </div>
+              </div>
+              <strong class="line-total">{{ item.price * item.quantity | currency:'KZT':'symbol-narrow':'1.0-0' }}</strong>
+              <button class="remove-item" type="button" (click)="removeProduct(item.id)" [attr.aria-label]="'Удалить ' + item.name">×</button>
+            </article>
+          </div>
+
+          <div class="delivery-note" [class.delivery-unlocked]="subtotal(items) >= freeDeliveryLimit">
+            <span class="delivery-icon" aria-hidden="true">✳</span>
+            <p *ngIf="subtotal(items) < freeDeliveryLimit">До бесплатной доставки ещё <strong>{{ freeDeliveryLimit - subtotal(items) | currency:'KZT':'symbol-narrow':'1.0-0' }}</strong></p>
+            <p *ngIf="subtotal(items) >= freeDeliveryLimit">Для вас доставка за наш счёт</p>
+            <div class="delivery-progress"><span [style.width.%]="deliveryProgress(items)"></span></div>
+          </div>
+
+          <div class="order-summary">
+            <div><span>Подытог</span><strong>{{ subtotal(items) | currency:'KZT':'symbol-narrow':'1.0-0' }}</strong></div>
+            <div><span>Доставка</span><strong *ngIf="subtotal(items) >= freeDeliveryLimit">Бесплатно</strong><strong *ngIf="subtotal(items) < freeDeliveryLimit">{{ deliveryCost | currency:'KZT':'symbol-narrow':'1.0-0' }}</strong></div>
+            <div class="grand-total"><span>Итого</span><strong>{{ grandTotal(items) | currency:'KZT':'symbol-narrow':'1.0-0' }}</strong></div>
+          </div>
+
+          <button class="checkout-button" type="button" (click)="checkout()">Оформить заказ <span aria-hidden="true">↗</span></button>
+          <p class="secure-note"><span aria-hidden="true">✳</span> Бесплатный возврат в течение 14 дней</p>
+        </div>
+      </ng-container>
+    </aside>
+  </main>
+
+  <footer class="site-footer">
+    <span>© KEREK MARKET</span>
+    <span>СДЕЛАНО В АЛМАТЫ <i></i> С ЛЮБОВЬЮ К ДЕТАЛЯМ</span>
+    <a href="#top">НАВЕРХ ↑</a>
+  </footer>
+</div>
